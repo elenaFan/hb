@@ -1,5 +1,7 @@
 <template>
+
      <div>
+         <!-- <input type="button" value='detail的累加' @click="detailAdd"> -->
         <div class="section">
             <div class="location">
                 <span>当前位置：</span>
@@ -13,7 +15,12 @@
                 <div class="wrap-box">
                     <div class="left-925">
                         <div class="goods-box clearfix">
-                            <div class="pic-box"></div>
+                            <div class="pic-box" v-if="images.normal_size.length!=0">
+                              <ProductZoomer
+                                :base-images="images"
+                                :base-zoomer-options="containerRoundOptions"
+                                />
+                            </div>
                             <div class="goods-spec">
                                 <h1>{{goodsinfo.title}}</h1>
                                 <p class="subtitle">{{goodsinfo.sub_title}}</p>
@@ -50,7 +57,7 @@
                                         <dd>
                                             <div id="buyButton" class="btn-buy">
                                                 <button onclick="cartAdd(this,'/',1,'/shopping.html');" class="buy">立即购买</button>
-                                                <button onclick="cartAdd(this,'/',0,'/cart.html');" class="add">加入购物车</button>
+                                                <button @click="addCart" class="add">加入购物车</button>
                                             </div>
                                         </dd>
                                     </dl>
@@ -58,6 +65,7 @@
                             </div>
                         </div>
                         <div id="goodsTabs" class="goods-tab bg-wrap">
+                             <Affix>
                             <div id="tabHead" class="tab-head" style="position: static; top: 517px; width: 925px;">
                                 <ul>
                                     <li>
@@ -69,6 +77,7 @@
                                     </li>
                                 </ul>
                             </div>
+                            </Affix>
                             <div class="tab-content entry" v-show="selectedStatus" v-html="goodsinfo.content">
                               
                             </div>
@@ -142,7 +151,7 @@
                                         </div>
                                         <div class="txt-box">
                                             <router-link :to="'/detail/'+item.id">{{item.title}} </router-link>
-                                            <span>{{item.add_time | beautifyTime('年','月','日')}}</span>
+                                            <span>{{item.add_time | beauty}}</span>
                                         </div>
                                     </li>
                                 </ul>
@@ -152,6 +161,9 @@
                 </div>
             </div>
         </div>
+           <BackTop :height="100" :bottom="100">
+        <div class="top">返回顶端</div>
+    </BackTop>
     </div>
 </template>
 <script>
@@ -159,106 +171,155 @@ export default {
   name: "detail",
   data: function() {
     return {
-        goodID:'',
+      goodID: "",
       goodsinfo: {},
       // 热卖列表
       hotgoodslist: [],
       // 图片列表
       imglist: [],
-      buyNum:1,
-      selectedStatus:0,
-      pageIndex:1,//默认是第一页
-      pageSize:6,
-      comments:[],
-      totalcount:0,
-      Mes:''
-
+      buyNum: 1,
+      selectedStatus: 0,
+      pageIndex: 1, //默认是第一页
+      pageSize: 6,
+      comments: [],
+      totalcount: 0,
+      Mes: "",
+      images: {
+        normal_size: [
+          {
+            id: 1,
+            url:
+              "https://www.google.com/search?q=%E7%8A%AC%E5%A4%9C%E5%8F%89&source=lnms&tbm=isch&sa=X&ved=0ahUKEwjfqrC_joDeAhWHM94KHbX2CFMQ_AUIDigB&biw=1536&bih=516&dpr=1.25#imgrc=-ZSNpzWshivGtM:"
+          },
+          {
+            id: 2,
+            url:
+              "https://www.google.com/search?q=%E7%8A%AC%E5%A4%9C%E5%8F%89&source=lnms&tbm=isch&sa=X&ved=0ahUKEwjfqrC_joDeAhWHM94KHbX2CFMQ_AUIDigB&biw=1536&bih=516&dpr=1.25#imgrc=yYMW3lt_5jxjHM:"
+          }
+        ]
+      },
+      containerRoundOptions: {
+        zoomFactor: 4,
+        pane: "container-round",
+        hoverDelay: 300,
+        namespace: "inline-zoomer",
+        move_by_click: true,
+        scroll_items: 5,
+        choosed_thumb_border_color: "#bbdefb"
+      }
     };
   },
 
-  methods:{
-      handleNum(){
-          console.log("hahah")
-      },
-          pageChange(pageNum){
-        // console.log('页码改变');
-        // console.log(pageNum);
-        // 修改页码
-        this.pageIndex = pageNum;
-        // 重新发请求
-        this.getComments();
+  methods: {
+    detailAdd() {
+      this.$store.commit("increment");
     },
-    subMes(){
-        this.$axios.post('site/validate/comment/post/goods/'+this.goodID,{
-          commenttxt: this.Mes
-        }).then(response=>{
-         this.pageIndex=1;
-            this.getComments();
-            this.Mes='';
-           
+    addCart(){
+        this.$store.commit('addCart',{
+            id:this.goodID,
+            buyCount:this.buyNum
         })
-        
-
     },
-    pageSizel(value){
-// console.log(value)
-this.pageSize=value;
-this.pageIndex=1;
-this.getComments();
-
+    handleNum() {
+      console.log("hahah");
     },
-      getGoodId(){
-         
-              this.$axios
-      .get("/site/goods/getgoodsinfo/" + this.goodID)
-      .then(response => {
-        // console.log(response);
-        // 商品信息
-        this.goodsinfo = response.data.message.goodsinfo;
-        // 热卖列表
-        this.hotgoodslist = response.data.message.hotgoodslist;
-        // 图片列表
-        this.imglist = response.data.message.imglist;
-      });
-      },
+    pageChange(pageNum) {
+      // console.log('页码改变');
+      // console.log(pageNum);
+      // 修改页码
+      this.pageIndex = pageNum;
+      // 重新发请求
+      this.getComments();
+    },
+    subMes() {
+      this.$axios
+        .post("site/validate/comment/post/goods/" + this.goodID, {
+          commenttxt: this.Mes
+        })
+        .then(response => {
+          this.pageIndex = 1;
+          this.getComments();
+          this.Mes = "";
+        });
+    },
+    pageSizel(value) {
+      // console.log(value)
+      this.pageSize = value;
+      this.pageIndex = 1;
+      this.getComments();
+    },
+    getGoodId() {
+      this.images.normal_size = [];
+      this.$axios
+        .get("/site/goods/getgoodsinfo/" + this.goodID)
+        .then(response => {
+          // console.log(response);
+          // 商品信息
+          this.goodsinfo = response.data.message.goodsinfo;
+          // 热卖列表
+          this.hotgoodslist = response.data.message.hotgoodslist;
+          // 图片列表
+          this.imglist = response.data.message.imglist;
+          let tem_normal_size = [];
+          this.imglist.forEach(v => {
+            tem_normal_size.push({
+              id: v.id,
+              url: v.thumb_path
+            });
+          });
+          this.images.normal_size = tem_normal_size;
+        });
+    },
 
-      getComments(){
-        //   this.$axios.get(`site/comment/getbypage/goods/${this.goodID}?pageIndex${this.pageIndex}&pageSize${this.pageSize}`)
-          
-          this.$axios
+    getComments() {
+      //   this.$axios.get(`site/comment/getbypage/goods/${this.goodID}?pageIndex${this.pageIndex}&pageSize${this.pageSize}`)
+
+      this.$axios
         .get(
           `site/comment/getbypage/goods/${this.goodID}?pageIndex=${
             this.pageIndex
           }&pageSize=${this.pageSize}`
-        ).then(response => {
-            //   console.log(response);
-            this.totalcount = response.data.totalcount;
+        )
+        .then(response => {
+          //   console.log(response);
+          this.totalcount = response.data.totalcount;
           this.pageIndex = response.data.pageIndex;
           this.pageSize = response.data.pageSize;
           this.comments = response.data.message;
-          })
-      }
+        });
+    }
   },
-    created() {
+  created() {
     this.goodID = this.$route.params.goodID;
 
-this.getGoodId();
- this.buyNum=1;
-this.getComments();
-  },
-   watch: {
-    '$route' (to, from) {
-      this.goodID=to.params.goodID;
-    // console.log(to);
     this.getGoodId();
+    this.buyNum = 1;
     this.getComments();
+  },
+  watch: {
+    $route(to, from) {
+      this.goodID = to.params.goodID;
+      // console.log(to);
+      this.getGoodId();
+      this.getComments();
     }
   }
 };
 </script>
 <style>
-.ql-align-center img{
-    display: block;
+.ql-align-center img {
+  display: block;
 }
+.pic-box {
+  width: 395px;
+  /* height: 320px; */
+}
+ .top{
+        padding: 10px;
+        background: rgba(0, 153, 229, .7);
+        color: #fff;
+        text-align: center;
+        border-radius: 2px;
+    }
 </style>
 

@@ -25,7 +25,7 @@
                     <a href="" class="">
                         <i class="iconfont icon-cart"></i>购物车(
                         <span id="shoppingCartCount">
-                            <span>4</span>
+                            <span>{$store.getters.cartGoodCart}}</span>
                         </span>)</a>
                 </div>
             </div>
@@ -79,8 +79,11 @@
             </div>
         </div>
     </div>
-<router-view></router-view>
-<div class="footer">
+
+ <!-- <input type="button" value="累加数字" @click="add"> -->
+
+    <router-view></router-view>
+    <div class="footer">
                 <div class="section">
                     <div class="foot-nav">
                         <a href="">关于我们</a>
@@ -110,7 +113,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+     </div>
 
   </div>
 
@@ -121,6 +124,10 @@
 import $ from "jquery";
 export default {
   name: "app",
+    created() {
+    // console.log(1111);
+    console.log(this.$store.state.count);
+  },
   mounted() {
     $(document).ready(function() {
 	$("#menu2 li a").wrapInner( '<span class="out"></span>' );
@@ -139,10 +146,22 @@ export default {
 
 });
 
-}
-};
+},
 
 
+
+
+  methods:{
+    add(){
+      // 修改 Vuex 仓库中的数据
+      this.$store.commit('addCart',{
+          id:96,
+          buyCount:98
+      })
+    //   this.$store.commit('increment')
+    }
+  }
+  };
 </script>
 
 <style>
